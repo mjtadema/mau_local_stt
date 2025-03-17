@@ -6,7 +6,7 @@ from mautrix.util.logging import TraceLogger
 import numpy as np
 import json
 
-from .import_backends import vosk, VOSK_INSTALLED, whispercpp, WHISPER_INSTALLED
+from .import_backends import vosk, VOSK_INSTALLED, pywhispercpp, WHISPER_INSTALLED
 
 if WHISPER_INSTALLED:
     import numpy as np
@@ -44,7 +44,7 @@ async def _run_ffmpeg(data: bytes, mimeType: str, logger: TraceLogger) -> Tuple[
     # logger.debug(stderr.decode('utf8'))
 
 
-def _run_whisper(whisper_model: whispercpp.Whisper, data: np.ndarray, logger: TraceLogger):
+def _run_whisper(whisper_model: pywhispercpp.Model, data: np.ndarray, logger: TraceLogger):
     try:
         return whisper_model.transcribe(data)
     except Exception as e:
@@ -52,7 +52,7 @@ def _run_whisper(whisper_model: whispercpp.Whisper, data: np.ndarray, logger: Tr
     return "Error"
 
 
-async def transcribe_audio_whisper(data: bytes, whisper_model: whispercpp.Whisper, mimeType: str,
+async def transcribe_audio_whisper(data: bytes, whisper_model: pywhispercpp.Model, mimeType: str,
                                    logger: TraceLogger) -> str:
     if not WHISPER_INSTALLED:
         return ""
@@ -64,7 +64,7 @@ async def transcribe_audio_whisper(data: bytes, whisper_model: whispercpp.Whispe
 
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, _run_whisper, whisper_model, data_numpy, logger)
-    return result
+    return ' '.join(seg.text for seg in result)
 
 
 def _run_vosk(vosk_rec: vosk.KaldiRecognizer, data: bytes, logger: TraceLogger) -> Optional[bool]:

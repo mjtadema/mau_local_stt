@@ -12,7 +12,7 @@ from mautrix.util.config import BaseProxyConfig
 from .config import Config
 from .transcribe_audio import transcribe_audio_whisper, transcribe_audio_vosk
 
-from .import_backends import vosk, VOSK_INSTALLED, whispercpp, WHISPER_INSTALLED
+from .import_backends import vosk, VOSK_INSTALLED, pywhispercpp, WHISPER_INSTALLED
 
 
 async def download_encrypted_media(file: EncryptedFile, client: MatrixClient) -> bytes:
@@ -72,14 +72,15 @@ class MauLocalSTT(Plugin):
                     self.current_backend = None
 
                     # load the (new) model
-                    self.whisper_model = whispercpp.Whisper.from_pretrained(self.config['whisper']["model_name"],
-                                                                            basedir=self.config['whisper']['base_dir'])
+                    self.whisper_model = pywhispercpp.Model(self.config['whisper']["model_name"],
+                                                            models_dir=self.config['whisper']['base_dir'],
+                                                            language = self.config['whisper']['language'],
+                                                            translate = self.config['whisper']['translate']
+                                                            )
 
                     self.current_backend = 'whisper'
                     self.last_whisper_model_name = self.config['whisper']['model_name']
 
-                self.whisper_model.params.language = self.config['whisper']['language']
-                self.whisper_model.params.translate = self.config['whisper']['translate']
             else:  # whispercpp is not installed
                 self.log.error("Backend is set to 'whisper', but whispercpp is not installed (pip install whispercpp)")
 

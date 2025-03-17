@@ -2,11 +2,11 @@
 from typing import Any
 
 try:
-    import whispercpp
+    import pywhispercpp.model as pywhispercpp
 
     WHISPER_INSTALLED = True  # whispercpp is installed
 except ModuleNotFoundError:
-    whispercpp = type("whispercpp", (object,), {"Whisper": Any})  # Set whispercpp for type hints
+    pywhispercpp = type("pywhispercpp", (object,), {"Model": Any})  # Set whispercpp for type hints
     WHISPER_INSTALLED = False  # whispercpp is not installed
 
 # Import vosk
