@@ -7,7 +7,7 @@ Modified to use the pywhispercpp backend which is better maintained.
 
 1. [FFmpeg](https://ffmpeg.org/) must be in `$PATH`
 2. Activate the maubot virtual environment (`source ./bin/activate`), and run
-    - `pip install whispercpp numpy` - if you want to use [whisper](https://github.com/ggerganov/whisper.cpp) as the
+    - `pip install pywhispercpp numpy` - if you want to use [whisper](https://github.com/ggerganov/whisper.cpp) as the
       backend.
     - `pip install vosk` - if you want to use [vosk](https://alphacephei.com/vosk/) as the backend.
 3. Download `maulocalstt` from the [releases](https://github.com/ElishaAz/mau_local_stt/releases) (or download the
