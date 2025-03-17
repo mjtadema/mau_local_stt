@@ -1,6 +1,7 @@
 # mau_local_stt
 
-A Maubot to transcribe audio messages in matrix rooms using local open-source libraries
+A Maubot to transcribe audio messages in matrix rooms using local open-source libraries.
+Modified to use the pywhispercpp backend which is better maintained.
 
 ## Installation
 
