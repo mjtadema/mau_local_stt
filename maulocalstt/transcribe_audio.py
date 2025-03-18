@@ -36,7 +36,7 @@ async def _run_ffmpeg(data: bytes, mimeType: str, logger: TraceLogger) -> Tuple[
         stderr=asyncio.subprocess.PIPE)
     # stdout, stderr = await proc.communicate(input=data)
     proc.stdin.write(data)
-    await proc.stdin.drain()
+    # await proc.stdin.drain()
     proc.stdin.close()
     # stdout, stderr = await proc.communicate()
     # stdout, stderr = await tasks.gather(proc.stdout.read(),proc.stderr.read())
@@ -58,10 +58,12 @@ async def transcribe_audio_whisper(data: bytes, whisper_model: pywhispercpp.Mode
         return ""
 
     stdout, stderr = await _run_ffmpeg(data, mimeType, logger)
+    logger.debug("received stream from ffmpeg")
     data_converted, ffmpeg_log = await tasks.gather(stdout.read(), stderr.read())
+    logger.debug("ffmpeg complete")
     logger.debug(ffmpeg_log.decode('utf8'))
     data_numpy = np.frombuffer(data_converted, np.int16).flatten().astype(np.float32) / 32768.0
-
+    logger.debug(f"received audio message of {len(data_numpy)/SAMPLE_RATE}s")
     loop = asyncio.get_event_loop()
     result = await loop.run_in_executor(None, _run_whisper, whisper_model, data_numpy, logger)
     return ' '.join(seg.text for seg in result)
