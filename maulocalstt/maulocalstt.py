@@ -132,39 +132,46 @@ class MauLocalSTT(Plugin):
         """
         Replies to all audio messages with their transcription.
         """
-        # Make sure that the message type is audio
-        if evt.content.msgtype != MessageType.AUDIO:
-            return
+        # First reply cause it might take a while to complete
+        wait_id = await evt.reply("Transcribing...")
 
-        content: MediaMessageEventContent = evt.content
-        self.log.debug(F"Message received. MimeType: {content.info.mimetype}")
+        try:
+            # Make sure that the message type is audio
+            if evt.content.msgtype != MessageType.AUDIO:
+                return
 
-        if content.url:  # content.url exists. File is not encrypted
-            data = await download_unencrypted_media(content.url, evt.client)
-        elif content.file:  # content.file exists. File IS encrypted
-            data = await download_encrypted_media(content.file, evt.client)
-        else:  # shouldn't happen
-            self.log.warning("A message with AUDIO message type received, but it does not contain a file.")
-            return
+            content: MediaMessageEventContent = evt.content
+            self.log.debug(F"Message received. MimeType: {content.info.mimetype}")
 
-        if shutil.which("ffmpeg") is None:
-            self.log.error("FFmpeg must be on PATH")
-            return
+            if content.url:  # content.url exists. File is not encrypted
+                data = await download_unencrypted_media(content.url, evt.client)
+            elif content.file:  # content.file exists. File IS encrypted
+                data = await download_encrypted_media(content.file, evt.client)
+            else:  # shouldn't happen
+                self.log.warning("A message with AUDIO message type received, but it does not contain a file.")
+                return
 
-        if self.config['backend'] == 'whisper' and WHISPER_INSTALLED:
-            # transcribe using whisper
-            transc = await transcribe_audio_whisper(data, self.whisper_model, content.info.mimetype, self.log)
-        elif self.config['backend'] == 'vosk' and VOSK_INSTALLED:
-            # transcribe using vosk
-            transc = await transcribe_audio_vosk(data, self.vosk_model, content.info.mimetype, self.log)
-        else:
-            self.log.warning("An audio message was received, but no valid backend is configured")
-            return
+            if shutil.which("ffmpeg") is None:
+                self.log.error("FFmpeg must be on PATH")
+                return
 
-        self.log.debug(F"Message transcribed: {transc}")
-        # send transcription as reply
-        await evt.reply(transc)
-        self.log.debug("Reply sent")
+            if self.config['backend'] == 'whisper' and WHISPER_INSTALLED:
+                # transcribe using whisper
+                transc = await transcribe_audio_whisper(data, self.whisper_model, content.info.mimetype, self.log)
+            elif self.config['backend'] == 'vosk' and VOSK_INSTALLED:
+                # transcribe using vosk
+                transc = await transcribe_audio_vosk(data, self.vosk_model, content.info.mimetype, self.log)
+            else:
+                self.log.warning("An audio message was received, but no valid backend is configured")
+                return
+
+            self.log.debug(F"Message transcribed: {transc}")
+            # edit reply with transcription
+            await evt.respond(transc, edits=wait_id)
+            self.log.debug("Reply sent")
+
+        except:
+            await evt.respond("Transcription failed", edits=wait_id)
 
     @classmethod
     def get_config_class(cls) -> Type[BaseProxyConfig]:
